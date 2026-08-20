@@ -85,6 +85,12 @@ else()
         set(CMAKE_CXX_FLAGS "-O3 -ffp-contract=fast")
     endif()
 endif()
+if(CYGWIN)
+    # Cygwin's gcc defaults to the old pre-C++11 libstdc++ ABI, for
+    # which xtensor selects std::has_trivial_default_constructor, a
+    # trait modern libstdc++ no longer provides.
+    string(APPEND CMAKE_CXX_FLAGS " -D_GLIBCXX_USE_CXX11_ABI=1")
+endif()
 # Ensure all code used from Eigen does not have LGPL license:
 set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -DEIGEN_MPL2_ONLY")
 message(STATUS "CMAKE_CXX_FLAGS are ${CMAKE_CXX_FLAGS}")
