@@ -292,6 +292,11 @@ jobs:
         fi
         export CMAKE_ARGS
         echo "CMAKE_ARGS=$CMAKE_ARGS"
+        # xsimd requires glibc's sincos/sincosf when _GNU_SOURCE is defined
+        # (which g++ does implicitly), but Cygwin's newlib does not declare
+        # them. Build without xsimd, the same supported configuration the
+        # "Tests with no XSIMD" workflow exercises.
+        export NO_XSIMD=1
         pip install -v --no-deps --no-build-isolation .
 
     # With the native python all dependencies including jaxlib are available
