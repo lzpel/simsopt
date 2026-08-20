@@ -87,6 +87,14 @@ jobs:
     - name: Fetch all history for all tags
       run: git fetch --all --tags --prune --unshallow
 
+    # The runner writes the run-step scripts with CRLF line endings on
+    # windows. Git's sh strips the \r but Cygwin's sh does not, so tell
+    # Cygwin's sh (bash) to ignore carriage returns. This step still runs
+    # under Git's sh because Cygwin is not on the PATH yet.
+    - name: Make Cygwin sh ignore carriage returns
+      if: runner.os == 'Windows'
+      run: echo "SHELLOPTS=igncr" >> $GITHUB_ENV
+
     # Cygwin plays the role apt-get does on the ubuntu runners: it provides
     # the unix toolchain, libraries and the python interpreter.
     - name: Set up Cygwin
