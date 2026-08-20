@@ -278,10 +278,12 @@ jobs:
         # through the alternatives system does not run under the setup
         # automation, which leaves numpy.linalg unable to load. Link the
         # library directly instead.
+        # A symlink is not enough: the Windows loader resolves dependent
+        # DLLs itself and cannot follow Cygwin symlinks, so copy the file.
         if ! python -c "import numpy" 2>/dev/null; then
-          echo "repairing the lapack library link for numpy"
-          ls -l /usr/lib/lapack || true
-          [ -e /usr/bin/cyglapack-0.dll ] || ln -sv "$(find /usr -name 'cyglapack-0.dll' | head -n 1)" /usr/bin/cyglapack-0.dll
+          echo "repairing the lapack library for numpy"
+          rm -f /usr/bin/cyglapack-0.dll
+          cp -v "$(find /usr -name 'cyglapack-0.dll' | head -n 1)" /usr/bin/cyglapack-0.dll
           python -c "import numpy; print('numpy ok', numpy.__version__)"
         fi
         CMAKE_ARGS="-DPython_EXECUTABLE=/usr/bin/python3.9 -DPython_INCLUDE_DIR=/usr/include/python3.9 -DPython_NumPy_INCLUDE_DIR=$(python -c 'import numpy; print(numpy.get_include())')"
