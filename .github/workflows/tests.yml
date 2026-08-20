@@ -102,9 +102,10 @@ jobs:
       uses: cygwin/cygwin-install-action@v6
       with:
         packages: >-
-          python39 python39-devel python39-pip python39-numpy
-          gcc-core gcc-g++ gcc-fortran make cmake git m4 pkg-config
-          libboost-devel liblapack-devel libopenblas
+          python39 python39-devel python39-pip
+          python39-numpy python39-matplotlib python39-h5py
+          gcc-core gcc-g++ gcc-fortran make cmake ninja ccache git m4
+          pkg-config libboost-devel liblapack-devel libopenblas
           libhdf5-devel libfftw3-devel libnetcdf-devel
 
     - name: Make python and pip resolve to the Cygwin interpreter
@@ -145,8 +146,11 @@ jobs:
     - name: env after adding python
       run: env
 
+    # cmake and ninja are left out here: on windows they come from Cygwin,
+    # and pip would otherwise build them from source since PyPI has no
+    # Cygwin wheels.
     - name: Install python dependencies
-      run: pip install numpy cmake scikit-build f90nml ninja wheel setuptools sympy qsc pyevtk matplotlib plotly networkx h5py ground==9 bentley_ottmann==8
+      run: pip install numpy f90nml wheel setuptools sympy qsc pyevtk matplotlib plotly networkx h5py ground==9 bentley_ottmann==8
 
     # These need graphviz, MPI and a fortran compiler, which are only set up
     # on the ubuntu runners.
@@ -154,7 +158,7 @@ jobs:
       if: runner.os == 'Linux'
       run: |
         sudo apt-get install graphviz graphviz-dev
-        pip install pygraphviz mpi4py f90wrap
+        pip install cmake scikit-build ninja pygraphviz mpi4py f90wrap
 
     # - name: Install pyoculus
     #   run: pip install -v git+https://github.com/zhisong/pyoculus
