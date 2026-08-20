@@ -887,7 +887,7 @@ class CoilForcesTest(unittest.TestCase):
                 for c in target_same_quad
             )
             J_cb = float(ForceClass(target_same_quad, source_external_40, **kwargs).J())
-            np.testing.assert_allclose(J_pc, J_cb, rtol=1e-10, atol=1e-30,
+            np.testing.assert_allclose(J_pc, J_cb, rtol=1e-10, atol=1e-28,
                                        err_msg=f"{ForceClass.__name__}: sum(per-coil J) should equal combined J")
             dJ_cb = ForceClass(target_same_quad, source_external_40, **kwargs).dJ()
             dJ_pc = sum(

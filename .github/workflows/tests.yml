@@ -274,12 +274,15 @@ jobs:
       run: |
         pip install scikit-build-core "pybind11<3.0.0" setuptools_scm tomli
         ls -l /usr/lib/libpython* || echo "no libpython found"
-        if ! python -c "import numpy"; then
-          echo "=== numpy import failed, dumping diagnostics ==="
-          ls -l /usr/lib/python3.9/site-packages/numpy/linalg/
-          cygcheck /usr/lib/python3.9/site-packages/numpy/linalg/_umath_linalg*.dll || true
-          ls -l /usr/bin/cygblas* /usr/bin/cyglapack* /usr/lib/lapack /etc/alternatives 2>&1 | head -50
-          exit 1
+        # The liblapack0 postinstall that should register cyglapack-0.dll
+        # through the alternatives system does not run under the setup
+        # automation, which leaves numpy.linalg unable to load. Link the
+        # library directly instead.
+        if ! python -c "import numpy" 2>/dev/null; then
+          echo "repairing the lapack library link for numpy"
+          ls -l /usr/lib/lapack || true
+          [ -e /usr/bin/cyglapack-0.dll ] || ln -sv "$(find /usr -name 'cyglapack-0.dll' | head -n 1)" /usr/bin/cyglapack-0.dll
+          python -c "import numpy; print('numpy ok', numpy.__version__)"
         fi
         CMAKE_ARGS="-DPython_EXECUTABLE=/usr/bin/python3.9 -DPython_INCLUDE_DIR=/usr/include/python3.9 -DPython_NumPy_INCLUDE_DIR=$(python -c 'import numpy; print(numpy.get_include())')"
         if ls /usr/lib/libpython3.9*.dll.a >/dev/null 2>&1; then
