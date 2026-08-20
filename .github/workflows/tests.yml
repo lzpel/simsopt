@@ -39,11 +39,20 @@ jobs:
         os: ["ubuntu-24.04", "windows-2025"]
         python-version: ["3.11"]
         test-type: [unit, integrated]
+        variant: [default]
         exclude:
           # The integrated tests run the example scripts, which need MPI and
           # VMEC; neither is available on windows.
           - os: windows-2025
             test-type: integrated
+        include:
+          # A second windows job that uses the native (MSVC-built) Python
+          # from setup-python instead of Cygwin's, so simsopt is built the
+          # same way as the released wheels and jaxlib/scipy come as wheels.
+          - os: windows-2025
+            python-version: "3.11"
+            test-type: unit
+            variant: native-python
 
     steps:
     # First print out lots of information. We do this in separate 
@@ -98,7 +107,7 @@ jobs:
     # Cygwin plays the role apt-get does on the ubuntu runners: it provides
     # the unix toolchain, libraries and the python interpreter.
     - name: Set up Cygwin
-      if: runner.os == 'Windows'
+      if: runner.os == 'Windows' && matrix.variant == 'default'
       uses: cygwin/cygwin-install-action@v6
       with:
         packages: >-
@@ -109,7 +118,7 @@ jobs:
           libhdf5-devel libfftw3-devel libnetcdf-devel
 
     - name: Make python and pip resolve to the Cygwin interpreter
-      if: runner.os == 'Windows'
+      if: runner.os == 'Windows' && matrix.variant == 'default'
       run: |
         ln -sf /usr/bin/python3.9 /usr/bin/python
         ln -sf /usr/bin/python3.9 /usr/bin/python3
@@ -133,15 +142,16 @@ jobs:
         ls -l
         pwd
 
-    # On windows the python interpreter comes from Cygwin instead.
+    # On windows the python interpreter comes from Cygwin instead, except
+    # in the native-python variant.
     - name: Set up Python ${{ matrix.python-version }}
-      if: runner.os == 'Linux'
+      if: runner.os == 'Linux' || matrix.variant == 'native-python'
       uses: actions/setup-python@v5
       with:
         python-version: ${{ matrix.python-version }}
 
     - name: which python3 after python setup
-      run: which python3
+      run: which python3 || which python
 
     - name: which pip after python setup
       run: |
@@ -252,9 +262,15 @@ jobs:
     # --no-deps because jaxlib has no Cygwin distribution at all; the other
     # runtime dependencies are installed above. The jax-dependent tests
     # (geo, field, ...) fail at import and show up in the test step.
-    - name: Install simsopt package (windows)
-      if: runner.os == 'Windows'
+    - name: Install simsopt package (windows, Cygwin)
+      if: runner.os == 'Windows' && matrix.variant == 'default'
       run: pip install -v --no-deps .
+
+    # With the native python all dependencies including jaxlib are available
+    # as wheels; only the MPI and VIS extras stay off (no mpi4py/vtk).
+    - name: Install simsopt package (windows, native python)
+      if: runner.os == 'Windows' && matrix.variant == 'native-python'
+      run: pip install -v .
 
     - name: Verify that importing simsopt does not automatically initialize MPI
       if: runner.os == 'Linux'
