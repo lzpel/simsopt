@@ -262,9 +262,22 @@ jobs:
     # --no-deps because jaxlib has no Cygwin distribution at all; the other
     # runtime dependencies are installed above. The jax-dependent tests
     # (geo, field, ...) fail at import and show up in the test step.
+    # --no-build-isolation because in the isolated env CMake's FindPython
+    # cannot locate the python library and numpy headers (and numpy gets
+    # rebuilt from source every run), so the build requirements go into the
+    # system environment and the locations are handed to CMake explicitly.
     - name: Install simsopt package (windows, Cygwin)
       if: runner.os == 'Windows' && matrix.variant == 'default'
-      run: pip install -v --no-deps .
+      run: |
+        pip install scikit-build-core "pybind11<3.0.0" setuptools_scm tomli
+        ls -l /usr/lib/libpython* || echo "no libpython found"
+        CMAKE_ARGS="-DPython_EXECUTABLE=/usr/bin/python3.9 -DPython_INCLUDE_DIR=/usr/include/python3.9 -DPython_NumPy_INCLUDE_DIR=$(python -c 'import numpy; print(numpy.get_include())')"
+        if ls /usr/lib/libpython3.9*.dll.a >/dev/null 2>&1; then
+          CMAKE_ARGS="$CMAKE_ARGS -DPython_LIBRARY=$(ls /usr/lib/libpython3.9*.dll.a | head -n 1)"
+        fi
+        export CMAKE_ARGS
+        echo "CMAKE_ARGS=$CMAKE_ARGS"
+        pip install -v --no-deps --no-build-isolation .
 
     # With the native python all dependencies including jaxlib are available
     # as wheels; only the MPI and VIS extras stay off (no mpi4py/vtk).
