@@ -116,6 +116,11 @@ jobs:
         ln -sf /usr/bin/pip3.9 /usr/bin/pip
         python --version
         pip --version
+        # Cygwin's git has its own HOME and global config, and the Windows
+        # ACL of the checkout looks like a foreign owner to it. Without this
+        # the 'git submodule update' that CMakeLists.txt runs fails with
+        # 'detected dubious ownership'.
+        git config --global --add safe.directory '*'
 
     # We must run actions/checkout before downloading and building VMEC, since checkout deletes the contents of the directory.
     - name: Download the VMEC2000 standalone repository
@@ -150,7 +155,7 @@ jobs:
     # and pip would otherwise build them from source since PyPI has no
     # Cygwin wheels.
     - name: Install python dependencies
-      run: pip install numpy f90nml wheel setuptools sympy qsc pyevtk matplotlib plotly networkx h5py ground==9 bentley_ottmann==8
+      run: pip install numpy f90nml wheel setuptools sympy qsc pyevtk matplotlib plotly networkx h5py ground==9 bentley_ottmann==8 Deprecated monty ruamel.yaml
 
     # These need graphviz, MPI and a fortran compiler, which are only set up
     # on the ubuntu runners.
@@ -244,11 +249,12 @@ jobs:
       if: runner.os == 'Linux'
       run: pip install -v ".[MPI,VIS]"
 
-    # The MPI and VIS extras need mpi4py and vtk, which are not available on
-    # windows/Cygwin.
+    # --no-deps because jaxlib has no Cygwin distribution at all; the other
+    # runtime dependencies are installed above. The jax-dependent tests
+    # (geo, field, ...) fail at import and show up in the test step.
     - name: Install simsopt package (windows)
       if: runner.os == 'Windows'
-      run: pip install -v .
+      run: pip install -v --no-deps .
 
     - name: Verify that importing simsopt does not automatically initialize MPI
       if: runner.os == 'Linux'
@@ -268,17 +274,16 @@ jobs:
       if: contains(matrix.test-type, 'unit')
       run: pip install coverage
 
+    # Run every directory even if an earlier one fails, so a single run
+    # reports all failing directories, then fail the step at the end.
     - name: Run tests on 1 process using coverage
       if: contains(matrix.test-type, 'unit')
-      run: | 
-        coverage run --source=simsopt -m unittest discover -t tests -v -s tests/configs
-        coverage run --source=simsopt -m unittest discover -t tests -v -s tests/core
-        coverage run --source=simsopt -m unittest discover -t tests -v -s tests/field
-        coverage run --source=simsopt -m unittest discover -t tests -v -s tests/geo
-        coverage run --source=simsopt -m unittest discover -t tests -v -s tests/mhd
-        coverage run --source=simsopt -m unittest discover -t tests -v -s tests/objectives
-        coverage run --source=simsopt -m unittest discover -t tests -v -s tests/solve
-        coverage run --source=simsopt -m unittest discover -t tests -v -s tests/util
+      run: |
+        rc=0
+        for dir in configs core field geo mhd objectives solve util; do
+          coverage run --source=simsopt -m unittest discover -t tests -v -s tests/$dir || rc=1
+        done
+        exit $rc
 
     - name: Run MPI tests using coverage
       if: contains(matrix.test-type, 'unit') && runner.os == 'Linux'
