@@ -32,6 +32,9 @@ jobs:
     env:
       OMPI_ALLOW_RUN_AS_ROOT: 1
       OMPI_ALLOW_RUN_AS_ROOT_CONFIRM: 1
+      # The windows console defaults to a legacy code page (cp1252), which
+      # cannot print the unicode characters some optimizers log.
+      PYTHONUTF8: 1
 
     strategy:
       fail-fast: false
@@ -271,6 +274,13 @@ jobs:
       run: |
         pip install scikit-build-core "pybind11<3.0.0" setuptools_scm tomli
         ls -l /usr/lib/libpython* || echo "no libpython found"
+        if ! python -c "import numpy"; then
+          echo "=== numpy import failed, dumping diagnostics ==="
+          ls -l /usr/lib/python3.9/site-packages/numpy/linalg/
+          cygcheck /usr/lib/python3.9/site-packages/numpy/linalg/_umath_linalg*.dll || true
+          ls -l /usr/bin/cygblas* /usr/bin/cyglapack* /usr/lib/lapack /etc/alternatives 2>&1 | head -50
+          exit 1
+        fi
         CMAKE_ARGS="-DPython_EXECUTABLE=/usr/bin/python3.9 -DPython_INCLUDE_DIR=/usr/include/python3.9 -DPython_NumPy_INCLUDE_DIR=$(python -c 'import numpy; print(numpy.get_include())')"
         if ls /usr/lib/libpython3.9*.dll.a >/dev/null 2>&1; then
           CMAKE_ARGS="$CMAKE_ARGS -DPython_LIBRARY=$(ls /usr/lib/libpython3.9*.dll.a | head -n 1)"

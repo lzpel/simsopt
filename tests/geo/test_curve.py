@@ -2,6 +2,7 @@ import logging
 import unittest
 import json
 import os
+import tempfile
 
 
 import numpy as np
@@ -665,7 +666,7 @@ class Testing(unittest.TestCase):
     def test_curve_to_vtk(self):
         curve0 = get_curve(self.curvetypes[0], False)
         curve1 = get_curve(self.curvetypes[1], True)
-        curves_to_vtk([curve0, curve1], '/tmp/curves')
+        curves_to_vtk([curve0, curve1], os.path.join(tempfile.gettempdir(), 'curves'))
 
     def test_plot(self):
         """

@@ -1,5 +1,7 @@
 import unittest
 import logging
+import os
+import tempfile
 import numpy as np
 from pathlib import Path
 
@@ -55,7 +57,7 @@ class FieldlineTesting(unittest.TestCase):
             assert np.allclose(np.linalg.norm(res_tys[i][:, 1:3], axis=1), R0[i])
             assert validate_phi_hits(res_phi_hits[i], nphis)
         if pyevtk is not None:
-            particles_to_vtk(res_tys, '/tmp/fieldlines')
+            particles_to_vtk(res_tys, os.path.join(tempfile.gettempdir(), 'fieldlines'))
 
     def test_poincare_tokamak(self):
         # Test a simple circular tokamak geometry that
@@ -101,7 +103,7 @@ class FieldlineTesting(unittest.TestCase):
             bsh, R0, Z0, tmax=1000, phis=phis, stopping_criteria=[])
         try:
             import matplotlib  # noqa
-            plot_poincare_data(res_phi_hits, phis, '/tmp/fieldlines.png',
+            plot_poincare_data(res_phi_hits, phis, os.path.join(tempfile.gettempdir(), 'fieldlines.png'),
                                surf=surf)
         except ImportError:
             pass

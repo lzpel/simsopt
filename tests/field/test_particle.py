@@ -1,5 +1,7 @@
 import unittest
 import logging
+import os
+import tempfile
 
 logging.basicConfig()
 
@@ -84,7 +86,7 @@ class ParticleTracingTesting(unittest.TestCase):
         self.bsh = bsh
         self.ma = ma
         if pyevtk is not None:
-            bsh.to_vtk('/tmp/bfield')
+            bsh.to_vtk(os.path.join(tempfile.gettempdir(), 'bfield'))
 
     def test_guidingcenter_vs_fullorbit(self):
         bsh = self.bsh
@@ -112,8 +114,8 @@ class ParticleTracingTesting(unittest.TestCase):
             Ekin=Ekin, umin=umin, umax=umax,
             phis=[], mode='full')
         if pyevtk is not None:
-            particles_to_vtk(gc_tys, '/tmp/particles_gc')
-            particles_to_vtk(fo_tys, '/tmp/particles_fo')
+            particles_to_vtk(gc_tys, os.path.join(tempfile.gettempdir(), 'particles_gc'))
+            particles_to_vtk(fo_tys, os.path.join(tempfile.gettempdir(), 'particles_fo'))
 
         # pick 100 random points on each trace, and ensure that the guiding
         # center and the full orbit simulation are close to each other
@@ -156,7 +158,7 @@ class ParticleTracingTesting(unittest.TestCase):
         s.fit_to_curve(ma, 0.10, flip_theta=False)
         sc = SurfaceClassifier(s, h=0.1, p=2)
         if pyevtk is not None:
-            sc.to_vtk('/tmp/classifier')
+            sc.to_vtk(os.path.join(tempfile.gettempdir(), 'classifier'))
         # check that the axis is classified as inside the domain
         assert sc.evaluate_xyz(ma.gamma()[:1, :]) > 0
         assert sc.evaluate_xyz(2*ma.gamma()[:1, :]) < 0
@@ -221,8 +223,8 @@ class ParticleTracingTesting(unittest.TestCase):
             Ekin=Ekin, umin=-0.5, umax=-0.25,
             phis=[], mode='full', tol=1e-11)
         if pyevtk is not None:
-            particles_to_vtk(gc_tys, '/tmp/particles_gc')
-            particles_to_vtk(fo_tys, '/tmp/particles_fo')
+            particles_to_vtk(gc_tys, os.path.join(tempfile.gettempdir(), 'particles_gc'))
+            particles_to_vtk(fo_tys, os.path.join(tempfile.gettempdir(), 'particles_fo'))
 
         # pick 100 random points on each trace, and ensure that
         # the energy is being conserved both in the guiding center
@@ -300,7 +302,7 @@ class ParticleTracingTesting(unittest.TestCase):
             Ekin=Ekin, umin=-0.5, umax=-0.25,  # pitch angle so that we have both par and perp contribution
             phis=[], mode='gc_vac', tol=1e-11)
         if pyevtk is not None:
-            particles_to_vtk(gc_tys, '/tmp/particles_gc')
+            particles_to_vtk(gc_tys, os.path.join(tempfile.gettempdir(), 'particles_gc'))
 
         # pick 100 random points on each trace
 
@@ -370,7 +372,7 @@ class ParticleTracingTesting(unittest.TestCase):
             Ekin=Ekin, umin=-0.01, umax=+0.01,
             phis=[], mode='gc_vac', tol=1e-11, stopping_criteria=[LevelsetStoppingCriterion(sc)])
         if pyevtk is not None:
-            particles_to_vtk(gc_tys, '/tmp/particles_gc')
+            particles_to_vtk(gc_tys, os.path.join(tempfile.gettempdir(), 'particles_gc'))
         assert gc_phi_hits[0][-1][1] == -1
         assert np.all(sc.evaluate_xyz(gc_tys[0][:, 1:4]) > 0)
 
