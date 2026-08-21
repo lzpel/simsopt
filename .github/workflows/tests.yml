@@ -286,7 +286,10 @@ jobs:
           cp -v "$(find /usr -name 'cyglapack-0.dll' | head -n 1)" /usr/bin/cyglapack-0.dll
           python -c "import numpy; print('numpy ok', numpy.__version__)"
         fi
-        CMAKE_ARGS="-DPython_EXECUTABLE=/usr/bin/python3.9 -DPython_INCLUDE_DIR=/usr/include/python3.9 -DPython_NumPy_INCLUDE_DIR=$(python -c 'import numpy; print(numpy.get_include())')"
+        # CMAKE_INTERPROCEDURAL_OPTIMIZATION=OFF: Cygwin's ld cannot
+        # auto-export symbols from LTO objects ('symbol wrong type (4 vs 3)'),
+        # and defining the variable stops pybind11 from adding its own -flto.
+        CMAKE_ARGS="-DPython_EXECUTABLE=/usr/bin/python3.9 -DPython_INCLUDE_DIR=/usr/include/python3.9 -DPython_NumPy_INCLUDE_DIR=$(python -c 'import numpy; print(numpy.get_include())') -DCMAKE_INTERPROCEDURAL_OPTIMIZATION=OFF"
         if ls /usr/lib/libpython3.9*.dll.a >/dev/null 2>&1; then
           CMAKE_ARGS="$CMAKE_ARGS -DPython_LIBRARY=$(ls /usr/lib/libpython3.9*.dll.a | head -n 1)"
         fi
