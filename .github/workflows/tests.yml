@@ -128,6 +128,9 @@ jobs:
         ln -sf /usr/bin/pip3.9 /usr/bin/pip
         python --version
         pip --version
+        # pip installs console scripts (coverage, ...) into /usr/local/bin,
+        # which the runner does not have on the PATH.
+        cygpath -w /usr/local/bin >> $GITHUB_PATH
         # Cygwin's git has its own HOME and global config, and the Windows
         # ACL of the checkout looks like a foreign owner to it. Without this
         # the 'git submodule update' that CMakeLists.txt runs fails with
