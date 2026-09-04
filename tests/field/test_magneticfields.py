@@ -1,4 +1,5 @@
 import json
+import os
 import unittest
 import tempfile
 import numpy as np
@@ -1205,7 +1206,7 @@ class Testing(unittest.TestCase):
     @unittest.skipIf(pyevtk is None, "pyevtk not found")
     def test_to_vtk(self):
         base_curves, base_currents, ma, nfp, bs = get_data("ncsx")
-        bs.to_vtk('/tmp/bfield')
+        bs.to_vtk(os.path.join(tempfile.gettempdir(), 'bfield'))
 
     def subtest_to_mgrid(self, include_potential):
         base_curves, base_currents, ma, nfp, bs = get_data("ncsx")

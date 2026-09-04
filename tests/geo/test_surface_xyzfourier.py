@@ -309,7 +309,7 @@ class SurfaceXYZFourierTests(unittest.TestCase):
         stellsym = False
         s = SurfaceXYZFourier(mpol=mpol, ntor=ntor, nfp=nfp, stellsym=stellsym, quadpoints_phi=phis, quadpoints_theta=thetas)
 
-        s.to_vtk('/tmp/surface')
+        s.to_vtk(os.path.join(tempfile.gettempdir(), 'surface'))
 
     def test_serialization(self):
         mpol = 4

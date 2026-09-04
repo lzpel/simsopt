@@ -60,6 +60,9 @@ double integral_BdotN(PyArray& Bcoil, PyArray& Btarget, PyArray& n, std::string 
 
     #pragma omp parallel for reduction(+:numerator_sum, denominator_sum)
     for(int i=0; i<nphi*ntheta; i++){
+        // Declared inside the loop so each thread gets its own copy; a
+        // variable declared outside would be shared and data-race.
+        double mod_B_squared = 0.0;
         double normN = std::sqrt(
             n_ptr[3 * i + 0] * n_ptr[3 * i + 0] 
             + n_ptr[3 * i + 1] * n_ptr[3 * i + 1] 
